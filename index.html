@@ -1,0 +1,2931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#181A43" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Student Payment Tracker — Alsayed Ibrahim Alsayed</title>
+  <style>
+    :root {
+      --cosmic: #181A43;
+      --cosmic-hover: #25285F;
+      --cosmic-deep: #101231;
+      --cosmic-muted: #4E517A;
+      --cosmic-soft: rgba(24, 26, 67, 0.06);
+      --cosmic-border: rgba(24, 26, 67, 0.12);
+
+      --melon: #F0D0B8;
+      --melon-hover: #E7BC9D;
+      --melon-light: #FAF0E8;
+      --melon-subtle: #FDF8F4;
+      --melon-ink: #7A4A28;
+
+      --bg: #FAF8F6;
+      --surface: #FFFFFF;
+      --border: #EAE4DE;
+      --text: #181A43;
+      --text-muted: #626585;
+
+      --paid: #157F47;
+      --paid-bg: #E3F7EC;
+      --partial: #B45309;
+      --partial-bg: #FEF3C7;
+      --unpaid: #BE123C;
+      --unpaid-bg: #FFE4E9;
+      --paused: #475569;
+      --paused-bg: #F1F5F9;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 2px 8px rgba(24, 26, 67, 0.04);
+      --shadow-md: 0 10px 30px rgba(24, 26, 67, 0.08);
+      --shadow-lg: 0 24px 60px rgba(24, 26, 67, 0.18);
+      --sidebar-w: 268px;
+      --bottom-nav-h: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      min-height: 100%;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Arabic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+    }
+
+    /* ================= LAYOUT ================= */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--cosmic);
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 45;
+      padding: 22px 16px 18px;
+      padding-left: calc(16px + env(safe-area-inset-left));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      transition: transform 0.25s ease, width 0.25s ease;
+    }
+
+    body.sidebar-collapsed .sidebar {
+      transform: translateX(-100%);
+    }
+
+    body.sidebar-collapsed .main-area {
+      margin-left: 0;
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 18, 49, 0.52);
+      backdrop-filter: blur(3px);
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 18px;
+      border-bottom: 1px solid rgba(240, 208, 184, 0.14);
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--melon);
+      color: var(--cosmic);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(240, 208, 184, 0.24);
+    }
+
+    .brand-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      color: #FFFFFF;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--melon);
+      opacity: 0.92;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 175px;
+    }
+
+    .brand-phone {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.68);
+      margin-top: 1px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .sidebar-cta {
+      width: 100%;
+      background: var(--melon);
+      color: var(--cosmic);
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-bottom: 18px;
+      flex-shrink: 0;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .sidebar-cta:hover {
+      background: var(--melon-hover);
+      transform: translateY(-1px);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.76);
+      padding: 11px 13px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+    }
+
+    .nav-btn.active {
+      background: rgba(240, 208, 184, 0.16);
+      color: var(--melon);
+      font-weight: 700;
+    }
+
+    .nav-btn .nav-count {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .nav-btn.active .nav-count {
+      background: var(--melon);
+      color: var(--cosmic);
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid rgba(240, 208, 184, 0.14);
+      padding-top: 14px;
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .offline-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 8px 11px;
+      border-radius: 10px;
+    }
+
+    .dot-online {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ADE80;
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
+      flex-shrink: 0;
+    }
+
+    /* ================= MOBILE BOTTOM NAV ================= */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 38;
+      background: var(--cosmic);
+      border-top: 1px solid rgba(240, 208, 184, 0.18);
+      padding: 6px calc(8px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+      box-shadow: 0 -6px 24px rgba(24, 26, 67, 0.18);
+    }
+
+    .bottom-nav-inner {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .bnav-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 4px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .bnav-btn.active {
+      color: var(--melon);
+      background: rgba(240, 208, 184, 0.14);
+    }
+
+    /* ================= MAIN ================= */
+    .main-area {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      transition: margin-left 0.25s ease;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 25;
+      background: rgba(250, 248, 246, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .menu-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--cosmic);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .menu-toggle:hover {
+      border-color: var(--cosmic);
+      background: var(--melon-subtle);
+    }
+
+    .page-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--cosmic);
+      line-height: 1.2;
+    }
+
+    .page-subtitle {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .month-stepper {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 3px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .month-step-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--cosmic);
+      transition: background 0.15s;
+    }
+
+    .month-step-btn:hover {
+      background: var(--melon-light);
+    }
+
+    .month-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .month-display {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cosmic);
+      padding: 0 9px;
+      min-width: 102px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .month-native-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .content {
+      padding: 22px 24px 48px;
+      max-width: 1380px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ================= BANNERS & CARDS ================= */
+    .tutor-bar {
+      background: linear-gradient(135deg, var(--cosmic) 0%, #242862 100%);
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tutor-bar-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tutor-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: var(--melon);
+      color: var(--cosmic);
+      font-weight: 800;
+      font-size: 15px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .tutor-name-main {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .tutor-meta-sub {
+      font-size: 12.5px;
+      color: var(--melon);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--cosmic);
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* ================= BUTTONS ================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--cosmic);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover {
+      background: var(--cosmic-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-melon {
+      background: var(--melon);
+      color: var(--cosmic);
+    }
+
+    .btn-melon:hover {
+      background: var(--melon-hover);
+    }
+
+    .btn-outline {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--cosmic);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--cosmic);
+      background: var(--melon-subtle);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+    }
+
+    .btn-ghost:hover {
+      background: var(--cosmic-soft);
+      color: var(--cosmic);
+    }
+
+    .btn-wa {
+      background: #E7F9EE;
+      border-color: #B6E9C9;
+      color: #12783D;
+    }
+
+    .btn-wa:hover {
+      background: #D0F3DE;
+    }
+
+    .btn-danger-outline {
+      background: transparent;
+      border-color: rgba(190, 18, 60, 0.25);
+      color: var(--unpaid);
+    }
+
+    .btn-danger-outline:hover {
+      background: var(--unpaid-bg);
+      border-color: var(--unpaid);
+    }
+
+    .btn-danger {
+      background: var(--unpaid);
+      color: #FFFFFF;
+    }
+
+    .btn-danger:hover {
+      background: #9F1239;
+    }
+
+    .btn-sm {
+      padding: 6px 11px;
+      font-size: 12.5px;
+      border-radius: 8px;
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ================= KPI GRID ================= */
+    .currency-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .currency-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .currency-pill:hover {
+      border-color: var(--cosmic);
+      color: var(--cosmic);
+    }
+
+    .currency-pill.active {
+      background: var(--cosmic);
+      border-color: var(--cosmic);
+      color: var(--melon);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card.kpi-featured {
+      background: var(--cosmic);
+      color: #FFFFFF;
+      border-color: var(--cosmic);
+    }
+
+    .kpi-card.kpi-featured .kpi-label {
+      color: var(--melon);
+    }
+
+    .kpi-card.kpi-featured .kpi-sub {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .kpi-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .kpi-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: var(--melon-light);
+      color: var(--cosmic);
+      flex-shrink: 0;
+    }
+
+    .kpi-featured .kpi-icon {
+      background: rgba(240, 208, 184, 0.16);
+      color: var(--melon);
+    }
+
+    .kpi-values {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .kpi-val.multi {
+      font-size: 16px;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 7px;
+    }
+
+    .progress-track {
+      height: 7px;
+      border-radius: 999px;
+      background: var(--melon-light);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .kpi-featured .progress-track {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--melon);
+      transition: width 0.35s ease;
+    }
+
+    /* ================= FILTERS & INPUTS ================= */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrap svg {
+      position: absolute;
+      left: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .input, .select, .textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 8.5px 12px;
+      font-size: 13.5px;
+      color: var(--cosmic);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input:focus, .select:focus, .textarea:focus {
+      border-color: var(--cosmic);
+      box-shadow: 0 0 0 3px rgba(24, 26, 67, 0.08);
+    }
+
+    .input.with-icon {
+      padding-left: 34px;
+    }
+
+    .filter-bar .input-wrap {
+      min-width: 190px;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .filter-bar .select {
+      width: auto;
+      min-width: 135px;
+    }
+
+    /* ================= TABLES ================= */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      background: var(--melon-subtle);
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13.5px;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(240, 208, 184, 0.12);
+    }
+
+    .cell-main {
+      font-weight: 600;
+      color: var(--cosmic);
+    }
+
+    .cell-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .phone-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+    }
+
+    .phone-link:hover {
+      color: var(--cosmic);
+      text-decoration: underline;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .actions-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: flex-end;
+      white-space: nowrap;
+      flex-wrap: wrap;
+    }
+
+    /* ================= BADGES ================= */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-paid { background: var(--paid-bg); color: var(--paid); }
+    .badge-partial { background: var(--partial-bg); color: var(--partial); }
+    .badge-unpaid { background: var(--unpaid-bg); color: var(--unpaid); }
+    .badge-paused { background: var(--paused-bg); color: var(--paused); }
+    .badge-melon { background: var(--melon-light); color: var(--melon-ink); }
+    .badge-cosmic { background: var(--cosmic-soft); color: var(--cosmic); }
+
+    .gateway-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 7px;
+      background: var(--melon-subtle);
+      border: 1px solid var(--melon);
+      color: var(--cosmic);
+      white-space: nowrap;
+    }
+
+    /* ================= GROUPS GRID ================= */
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      gap: 16px;
+    }
+
+    .group-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .group-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--melon-hover);
+    }
+
+    .group-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .group-subject {
+      display: inline-block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--melon-ink);
+      background: var(--melon-light);
+      padding: 3px 9px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+    }
+
+    .group-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--cosmic);
+      line-height: 1.3;
+    }
+
+    .group-fee-tag {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .group-fee-amt {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--cosmic);
+    }
+
+    .group-fee-per {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .group-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .group-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .group-stats-box {
+      background: var(--melon-subtle);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 12px;
+    }
+
+    .group-stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      margin-bottom: 6px;
+    }
+
+    .group-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 4px;
+    }
+
+    /* ================= SETTINGS GRID ================= */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .export-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .export-item:first-child { padding-top: 0; }
+    .export-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+    /* ================= EMPTY STATES ================= */
+    .empty-state {
+      text-align: center;
+      padding: 40px 18px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 15px;
+      background: var(--melon-light);
+      color: var(--cosmic);
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+    }
+
+    .empty-state h3 {
+      font-size: 15.5px;
+      color: var(--cosmic);
+      margin-bottom: 5px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      max-width: 360px;
+      margin: 0 auto 14px;
+    }
+
+    /* ================= MODALS ================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 18, 49, 0.56);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 65;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.16s ease;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: calc(100vh - 28px);
+      max-height: calc(100dvh - 28px);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: slideUp 0.18s ease;
+      margin: auto;
+    }
+
+    .modal.modal-lg { max-width: 680px; }
+    .modal.modal-sm { max-width: 420px; }
+
+    .modal-header {
+      padding: 15px 20px;
+      background: var(--cosmic);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      background: rgba(240, 208, 184, 0.25);
+      color: var(--melon);
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+
+    .modal-footer {
+      padding: 13px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--melon-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    /* ================= FORMS ================= */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--cosmic);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .form-hint {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .billing-summary-box {
+      background: var(--melon-light);
+      border: 1px solid var(--melon-hover);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .bs-item-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--melon-ink);
+    }
+
+    .bs-item-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--cosmic);
+      margin-top: 2px;
+    }
+
+    .gateway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .gateway-option {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.15s;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--cosmic);
+    }
+
+    .gateway-option:hover {
+      border-color: var(--cosmic);
+      background: var(--melon-subtle);
+    }
+
+    .gateway-option.selected {
+      border-color: var(--cosmic);
+      background: var(--cosmic);
+      color: var(--melon);
+    }
+
+    .quick-chips {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .quick-chip {
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--melon-hover);
+      background: var(--melon-light);
+      color: var(--cosmic);
+      cursor: pointer;
+    }
+
+    .quick-chip:hover {
+      background: var(--melon);
+    }
+
+    /* ================= RECEIPT DESIGN ================= */
+    .receipt-paper {
+      background: #FFFFFF;
+      border: 1.5px solid var(--cosmic);
+      border-radius: 14px;
+      overflow: hidden;
+      color: var(--cosmic);
+    }
+
+    .receipt-banner {
+      background: var(--cosmic);
+      color: #FFFFFF;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .receipt-brand h2 {
+      font-size: 17.5px;
+      font-weight: 800;
+      color: var(--melon);
+      letter-spacing: -0.01em;
+    }
+
+    .receipt-brand p {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.84);
+      margin-top: 2px;
+    }
+
+    .receipt-meta-right {
+      text-align: right;
+    }
+
+    .receipt-tag {
+      display: inline-block;
+      background: var(--melon);
+      color: var(--cosmic);
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 9px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+    }
+
+    .receipt-no {
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .receipt-body {
+      padding: 20px 22px;
+    }
+
+    .receipt-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px dashed #D4CEC8;
+      margin-bottom: 16px;
+    }
+
+    .r-field-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .r-field-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cosmic);
+      margin-top: 2px;
+    }
+
+    .receipt-amount-box {
+      background: var(--melon-light);
+      border: 1px solid var(--melon-hover);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .receipt-amount-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--melon-ink);
+    }
+
+    .receipt-amount-big {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--cosmic);
+    }
+
+    .receipt-stamp {
+      border: 2px solid var(--paid);
+      color: var(--paid);
+      background: var(--paid-bg);
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .receipt-breakdown {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .receipt-breakdown td {
+      padding: 7px 0;
+      border-bottom: 1px solid #EFECE8;
+      font-size: 13px;
+    }
+
+    .receipt-breakdown td:last-child {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .receipt-breakdown tr:last-child td {
+      border-bottom: none;
+    }
+
+    .receipt-footer-note {
+      background: #FAF8F6;
+      border-radius: 9px;
+      padding: 11px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .receipt-sig {
+      text-align: right;
+      min-width: 130px;
+      margin-left: auto;
+    }
+
+    .receipt-sig-line {
+      border-top: 1px solid var(--cosmic);
+      margin-top: 20px;
+      padding-top: 4px;
+      font-size: 11px;
+      color: var(--cosmic);
+      font-weight: 600;
+    }
+
+    /* ================= TOAST ================= */
+    .toast-container {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      right: calc(20px + env(safe-area-inset-right));
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--cosmic);
+      color: #FFFFFF;
+      border-left: 4px solid var(--melon);
+      padding: 11px 15px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideUp 0.2s ease;
+      max-width: 340px;
+    }
+
+    /* ================= VIEW SWITCHING ================= */
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.16s ease; }
+
+    #print-receipt-root { display: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================= PORTRAIT & LANDSCAPE RESPONSIVE RULES ================= */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Tablet & Mobile Drawer Mode (< 920px) */
+    @media (max-width: 920px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-backdrop.open {
+        display: block;
+      }
+      .main-area {
+        margin-left: 0 !important;
+      }
+      .bottom-nav {
+        display: block;
+      }
+      .content {
+        padding: 16px 14px calc(var(--bottom-nav-h) + 28px + env(safe-area-inset-bottom));
+      }
+      .toast-container {
+        bottom: calc(var(--bottom-nav-h) + 14px + env(safe-area-inset-bottom));
+        right: 14px;
+        left: 14px;
+        align-items: center;
+      }
+      .topbar {
+        padding: 11px 14px;
+      }
+    }
+
+    /* Portrait Mode on Phones (Vertical Orientation) */
+    @media (max-width: 640px) and (orientation: portrait) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .kpi-card {
+        padding: 13px 14px;
+      }
+      .kpi-val {
+        font-size: 18px;
+      }
+      .page-subtitle {
+        display: none;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .billing-summary-box {
+        grid-template-columns: repeat(3, 1fr);
+        padding: 10px;
+      }
+      .bs-item-val {
+        font-size: 13.5px;
+      }
+      .filter-bar {
+        width: 100%;
+      }
+      .filter-bar .input-wrap,
+      .filter-bar .select {
+        width: 100%;
+        max-width: none;
+        flex: 1 1 100%;
+      }
+      .receipt-banner {
+        flex-direction: column;
+      }
+      .receipt-meta-right {
+        text-align: left;
+      }
+      .receipt-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Responsive Card-Table in Portrait Mode */
+      table.resp-table thead {
+        display: none;
+      }
+      table.resp-table,
+      table.resp-table tbody,
+      table.resp-table tr,
+      table.resp-table td {
+        display: block;
+        width: 100%;
+      }
+      table.resp-table tr {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      table.resp-table td {
+        padding: 5px 0;
+        border-bottom: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: right;
+      }
+      table.resp-table td::before {
+        content: attr(data-label);
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-align: left;
+        flex-shrink: 0;
+      }
+      table.resp-table td.actions-td {
+        padding-top: 9px;
+        margin-top: 4px;
+        border-top: 1px dashed var(--border);
+        justify-content: flex-end;
+      }
+      table.resp-table td.actions-td::before {
+        display: none;
+      }
+    }
+
+    /* Landscape Mode on Phones & Compact Heights (Horizontal Orientation) */
+    @media (max-height: 540px) and (orientation: landscape) {
+      .topbar {
+        position: static;
+        padding: 8px 14px;
+      }
+      .page-subtitle {
+        display: none;
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .kpi-card {
+        padding: 11px 13px;
+      }
+      .kpi-val {
+        font-size: 17px;
+      }
+      .tutor-bar {
+        padding: 10px 14px;
+        margin-bottom: 12px;
+      }
+      .modal-overlay {
+        align-items: flex-start;
+        padding: 8px;
+      }
+      .modal {
+        max-height: none;
+        margin: 0 auto;
+      }
+      .modal-header {
+        padding: 10px 16px;
+      }
+      .modal-body {
+        padding: 12px 16px;
+        max-height: none;
+      }
+      .modal-footer {
+        padding: 10px 16px;
+      }
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .gateway-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .bottom-nav {
+        padding-top: 4px;
+        padding-bottom: calc(4px + env(safe-area-inset-bottom));
+      }
+      .bnav-btn {
+        flex-direction: row;
+        gap: 6px;
+        padding: 5px 6px;
+      }
+    }
+
+    /* Very narrow portrait (< 380px) */
+    @media (max-width: 380px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .gateway-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ================= PRINT MEDIA ================= */
+    @media print {
+      @page {
+        margin: 12mm;
+        size: auto;
+      }
+      body {
+        background: #FFFFFF !important;
+        padding: 0 !important;
+      }
+      body > *:not(#print-receipt-root) {
+        display: none !important;
+      }
+      #print-receipt-root {
+        display: block !important;
+        width: 100%;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .receipt-paper,
+      .receipt-banner,
+      .receipt-amount-box,
+      .receipt-tag,
+      .receipt-stamp,
+      .receipt-footer-note {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="brand-title">Payment Tracker</div>
+        <div class="brand-sub" id="sidebarTutorName">Alsayed Ibrahim Alsayed</div>
+        <div class="brand-phone" id="sidebarTutorPhone">01145450890</div>
+      </div>
+    </div>
+
+    <button class="sidebar-cta" onclick="openPaymentModal()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Log Payment
+    </button>
+
+    <ul class="nav-list">
+      <li>
+        <button class="nav-btn active" data-view="overview" onclick="switchView('overview')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Overview &amp; Dues
+          <span class="nav-count" id="navUnpaidCount">0</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-btn" data-view="groups" onclick="switchView('groups')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Groups
+          <span class="nav-count" id="navGroupsCount">0</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-btn" data-view="students" onclick="switchView('students')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Students
+          <span class="nav-count" id="navStudentsCount">0</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-btn" data-view="payments" onclick="switchView('payments')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Payments &amp; Receipts
+          <span class="nav-count" id="navPaymentsCount">0</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-btn" data-view="settings" onclick="switchView('settings')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Backup &amp; Settings
+        </button>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="offline-pill">
+        <span class="dot-online"></span>
+        <span>Offline-First • Auto-Saved</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Workspace -->
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="handleMenuButton()" aria-label="Toggle navigation" title="Toggle Menu">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div style="min-width:0;">
+          <h1 class="page-title" id="topbarTitle">Overview &amp; Monthly Dues</h1>
+          <div class="page-subtitle" id="topbarSubtitle">Track monthly collections and pending student balances</div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="month-stepper" title="Change Billing Month">
+          <button class="month-step-btn" onclick="stepMonth(-1)" aria-label="Previous month">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="month-input-wrap">
+            <span class="month-display" id="monthDisplay">Nov 2026</span>
+            <input type="month" class="month-native-input" id="globalMonthInput" onchange="setBillingMonth(this.value)" />
+          </div>
+          <button class="month-step-btn" onclick="stepMonth(1)" aria-label="Next month">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <button class="btn btn-primary" onclick="openPaymentModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Log Pay</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- Tutor Identity Header Bar -->
+      <div class="tutor-bar">
+        <div class="tutor-bar-info">
+          <div class="tutor-avatar" id="bannerAvatar">AI</div>
+          <div>
+            <div class="tutor-name-main" id="bannerTutorName">Mr. Alsayed Ibrahim Alsayed</div>
+            <div class="tutor-meta-sub">
+              <span id="bannerTutorSub">Private Tutoring &amp; Academic Coaching</span>
+              <span>•</span>
+              <span id="bannerTutorPhone" style="font-family:ui-monospace,monospace; font-weight:700;">01145450890</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;" id="demoBannerActions"></div>
+      </div>
+
+      <!-- ================= VIEW 1: OVERVIEW & DUES ================= -->
+      <section class="view-section active" id="view-overview">
+        <div class="currency-bar" id="overviewCurrencyBar"></div>
+        <div class="kpi-grid" id="overviewKpiGrid"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Monthly Dues Ledger</h2>
+              <div class="cell-sub" id="duesMonthCaption">Active students for selected month</div>
+            </div>
+            <div class="filter-bar">
+              <div class="input-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="input with-icon" id="duesSearch" placeholder="Search student or phone..." oninput="renderOverview()" />
+              </div>
+              <select class="select" id="duesGroupFilter" onchange="renderOverview()">
+                <option value="">All Groups</option>
+              </select>
+              <select class="select" id="duesStatusFilter" onchange="renderOverview()">
+                <option value="">All Statuses</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="partial">Partial</option>
+                <option value="paid">Paid</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="exportDuesCSV()" title="Export this month's dues to Excel CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                CSV
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap" id="duesTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 2: GROUPS ================= -->
+      <section class="view-section" id="view-groups">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+          <div class="filter-bar">
+            <div class="input-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="input with-icon" id="groupsSearch" placeholder="Filter by group or subject..." oninput="renderGroups()" />
+            </div>
+            <select class="select" id="groupsCurrencyFilter" onchange="renderGroups()">
+              <option value="">All Currencies</option>
+              <option value="EGP">EGP</option>
+              <option value="USD">USD</option>
+              <option value="SAR">SAR</option>
+              <option value="AED">AED</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="openGroupModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            New Group
+          </button>
+        </div>
+
+        <div class="groups-grid" id="groupsGrid"></div>
+      </section>
+
+      <!-- ================= VIEW 3: STUDENTS ================= -->
+      <section class="view-section" id="view-students">
+        <div class="card">
+          <div class="card-header">
+            <div class="filter-bar" style="flex:1;">
+              <div class="input-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="input with-icon" id="studentsSearch" placeholder="Search name or phone..." oninput="renderStudents()" />
+              </div>
+              <select class="select" id="studentsGroupFilter" onchange="renderStudents()">
+                <option value="">All Groups</option>
+              </select>
+              <select class="select" id="studentsStatusFilter" onchange="renderStudents()">
+                <option value="">All Enrollments</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="graduated">Graduated</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="openStudentModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Add Student
+            </button>
+          </div>
+          <div class="table-wrap" id="studentsTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 4: PAYMENTS ================= -->
+      <section class="view-section" id="view-payments">
+        <div class="card">
+          <div class="card-header">
+            <div class="filter-bar" style="flex:1;">
+              <div class="input-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="input with-icon" id="paymentsSearch" placeholder="Search student, receipt #, ref..." oninput="renderPayments()" />
+              </div>
+              <select class="select" id="paymentsScopeFilter" onchange="renderPayments()">
+                <option value="month">Selected Billing Month</option>
+                <option value="all">All Time</option>
+              </select>
+              <select class="select" id="paymentsGroupFilter" onchange="renderPayments()">
+                <option value="">All Groups</option>
+              </select>
+              <select class="select" id="paymentsGatewayFilter" onchange="renderPayments()">
+                <option value="">All Gateways</option>
+                <option value="InstaPay">InstaPay</option>
+                <option value="Vodafone Cash">Vodafone Cash</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+              </select>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="exportPaymentsCSV()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+          <div id="paymentsSummaryStrip" style="padding:11px 20px; background:var(--melon-subtle); border-bottom:1px solid var(--border); display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:13px;"></div>
+          <div class="table-wrap" id="paymentsTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 5: BACKUP & SETTINGS ================= -->
+      <section class="view-section" id="view-settings">
+        <div class="settings-grid">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Tutor &amp; Receipt Profile</h2>
+                <div class="cell-sub">Printed on official payment slips</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="settingsForm" onsubmit="saveSettings(event)" class="form-grid">
+                <div class="form-group full">
+                  <label class="form-label">Tutor / Academy Name</label>
+                  <input type="text" class="input" id="setTutorName" dir="auto" required />
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Subject / Tagline</label>
+                  <input type="text" class="input" id="setAcademySub" dir="auto" placeholder="e.g., Private Math &amp; Physics Coaching" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contact Phone / Handle</label>
+                  <input type="text" class="input" id="setContactInfo" placeholder="01145450890" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Default Currency</label>
+                  <select class="select" id="setDefaultCurrency">
+                    <option value="EGP">EGP — Egyptian Pound</option>
+                    <option value="USD">USD — US Dollar</option>
+                    <option value="SAR">SAR — Saudi Riyal</option>
+                    <option value="AED">AED — UAE Dirham</option>
+                    <option value="EUR">EUR — Euro</option>
+                  </select>
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Receipt Footer Note</label>
+                  <textarea class="textarea" id="setReceiptNote" rows="2" dir="auto"></textarea>
+                </div>
+                <div class="form-group full" style="flex-direction:row; justify-content:flex-end;">
+                  <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Excel-Ready CSV Exports (UTF-8)</h2>
+                  <div class="cell-sub">Supports English &amp; Arabic characters cleanly in Excel</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">Monthly Dues Report</div>
+                    <div class="cell-sub">Student fees, paid &amp; remaining balances for <strong id="exportMonthLabel"></strong></div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="exportDuesCSV()">Download CSV</button>
+                </div>
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">All Payments Ledger</div>
+                    <div class="cell-sub">Complete transaction log with receipt numbers &amp; gateways</div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="exportPaymentsCSV()">Download CSV</button>
+                </div>
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">Groups &amp; Student Roster</div>
+                    <div class="cell-sub">All enrolled students, contacts, statuses &amp; agreed rates</div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="exportStudentsCSV()">Download CSV</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Full JSON Backup &amp; Restore</h2>
+                  <div class="cell-sub">Transfer your offline database across devices</div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">Download Full Backup (.json)</div>
+                    <div class="cell-sub">Saves all groups, students, payments, and settings</div>
+                  </div>
+                  <button class="btn btn-primary btn-sm" onclick="downloadJSONBackup()">Backup JSON</button>
+                </div>
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">Restore from Backup (.json)</div>
+                    <div class="cell-sub">Replaces current workspace with a saved JSON file</div>
+                  </div>
+                  <div>
+                    <input type="file" id="jsonRestoreInput" accept=".json,application/json" style="display:none;" onchange="handleJSONRestore(event)" />
+                    <button class="btn btn-melon btn-sm" onclick="document.getElementById('jsonRestoreInput').click()">Restore JSON</button>
+                  </div>
+                </div>
+                <div class="export-item">
+                  <div>
+                    <div class="cell-main">Workspace Reset</div>
+                    <div class="cell-sub">Reload sample data or clear browser storage</div>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline btn-sm" onclick="confirmLoadSampleData()">Load Demo</button>
+                    <button class="btn btn-danger-outline btn-sm" onclick="confirmClearAllData()">Clear All</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Mobile & Tablet Portrait/Landscape Bottom Navigation -->
+<nav class="bottom-nav" aria-label="Mobile Navigation">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" data-view="overview" onclick="switchView('overview')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      <span>Dues</span>
+    </button>
+    <button class="bnav-btn" data-view="groups" onclick="switchView('groups')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Groups</span>
+    </button>
+    <button class="bnav-btn" data-view="students" onclick="switchView('students')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span>Students</span>
+    </button>
+    <button class="bnav-btn" data-view="payments" onclick="switchView('payments')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span>Receipts</span>
+    </button>
+    <button class="bnav-btn" data-view="settings" onclick="switchView('settings')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Settings</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ================= MODAL: FAST PAYMENT ENTRY ================= -->
+<div class="modal-overlay" id="modalPayment" onclick="closeModalOnBackdrop(event, 'modalPayment')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--melon)" stroke-width="2.2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Fast Payment Entry
+      </div>
+      <button class="modal-close" onclick="closeModal('modalPayment')" aria-label="Close">✕</button>
+    </div>
+    <form id="paymentForm" onsubmit="submitPayment(event, false)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Group Lookup</label>
+            <select class="select" id="payGroupSelect" onchange="onPaymentGroupChange()">
+              <option value="">All Groups</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Billing Month</label>
+            <input type="month" class="input" id="payBillingMonth" required onchange="onPaymentStudentChange()" />
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">
+              <span>Student</span>
+              <span class="form-hint" id="payStudentCountHint"></span>
+            </label>
+            <input type="text" class="input" id="payStudentQuickFilter" placeholder="Quick filter student name or phone..." oninput="populatePaymentStudents(false)" style="margin-bottom:6px;" />
+            <select class="select" id="payStudentSelect" required onchange="onPaymentStudentChange()">
+              <option value="">Select a student...</option>
+            </select>
+          </div>
+
+          <div class="form-group full" id="paySummaryWrapper" style="display:none;">
+            <div class="billing-summary-box">
+              <div>
+                <div class="bs-item-label">Agreed Fee</div>
+                <div class="bs-item-val" id="bsAgreedFee">—</div>
+              </div>
+              <div>
+                <div class="bs-item-label">Already Paid</div>
+                <div class="bs-item-val" id="bsAlreadyPaid">—</div>
+              </div>
+              <div>
+                <div class="bs-item-label">Remaining Due</div>
+                <div class="bs-item-val" id="bsRemainingDue" style="color:var(--unpaid);">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>Amount (<span id="payCurrencyLabel">EGP</span>)</span>
+            </label>
+            <input type="number" step="0.01" min="0.01" class="input" id="payAmount" required placeholder="0.00" />
+            <div class="quick-chips" id="payQuickChips"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Date</label>
+            <input type="date" class="input" id="payDate" required />
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">Payment Gateway</label>
+            <input type="hidden" id="payGateway" value="InstaPay" />
+            <div class="gateway-grid" id="gatewayPicker">
+              <div class="gateway-option selected" data-gw="InstaPay" onclick="selectGateway('InstaPay')">
+                <span>⚡</span> InstaPay
+              </div>
+              <div class="gateway-option" data-gw="Vodafone Cash" onclick="selectGateway('Vodafone Cash')">
+                <span>📱</span> Vodafone Cash
+              </div>
+              <div class="gateway-option" data-gw="Cash" onclick="selectGateway('Cash')">
+                <span>💵</span> Cash
+              </div>
+              <div class="gateway-option" data-gw="Bank Transfer" onclick="selectGateway('Bank Transfer')">
+                <span>🏦</span> Bank Transfer
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Reference / Transfer ID <span class="form-hint">Optional</span></label>
+            <input type="text" class="input" id="payReference" placeholder="e.g., IP-948201" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes <span class="form-hint">Optional</span></label>
+            <input type="text" class="input" id="payNotes" dir="auto" placeholder="e.g., Paid by parent" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalPayment')">Cancel</button>
+        <button type="submit" class="btn btn-melon">Save Payment</button>
+        <button type="button" class="btn btn-primary" onclick="submitPayment(event, true)">Save &amp; Print Receipt</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: GROUP CREATE / EDIT ================= -->
+<div class="modal-overlay" id="modalGroup" onclick="closeModalOnBackdrop(event, 'modalGroup')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="groupModalTitle">Create Group</div>
+      <button class="modal-close" onclick="closeModal('modalGroup')" aria-label="Close">✕</button>
+    </div>
+    <form id="groupForm" onsubmit="saveGroup(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <input type="hidden" id="groupId" />
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Group Name</label>
+            <input type="text" class="input" id="groupName" dir="auto" required placeholder="e.g., 3rd Sec Physics — Group A" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject / Track</label>
+            <input type="text" class="input" id="groupSubject" dir="auto" required placeholder="e.g., IGCSE Math, Physics" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Schedule</label>
+            <input type="text" class="input" id="groupSchedule" dir="auto" placeholder="e.g., Sun &amp; Wed • 5:00 PM" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Currency</label>
+            <select class="select" id="groupCurrency" required>
+              <option value="EGP">EGP (Egyptian Pound)</option>
+              <option value="USD">USD (US Dollar)</option>
+              <option value="SAR">SAR (Saudi Riyal)</option>
+              <option value="AED">AED (UAE Dirham)</option>
+              <option value="EUR">EUR (Euro)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Standard Monthly Fee</label>
+            <input type="number" step="0.01" min="0" class="input" id="groupFee" required placeholder="800" />
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Location / Notes <span class="form-hint">Optional</span></label>
+            <input type="text" class="input" id="groupNotes" dir="auto" placeholder="e.g., Online via Zoom / Center" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalGroup')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Group</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: STUDENT CREATE / EDIT ================= -->
+<div class="modal-overlay" id="modalStudent" onclick="closeModalOnBackdrop(event, 'modalStudent')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="studentModalTitle">Add Student</div>
+      <button class="modal-close" onclick="closeModal('modalStudent')" aria-label="Close">✕</button>
+    </div>
+    <form id="studentForm" onsubmit="saveStudent(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <input type="hidden" id="studentId" />
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Student Full Name</label>
+            <input type="text" class="input" id="studentName" dir="auto" required placeholder="e.g., Youssef Ahmed" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact / Parent Phone</label>
+            <input type="tel" class="input" id="studentPhone" placeholder="01012345678" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Enrollment Status</label>
+            <select class="select" id="studentStatus">
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="graduated">Graduated</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assigned Group</label>
+            <select class="select" id="studentGroup" required onchange="onStudentFormGroupChange()">
+              <option value="">Select group...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span>Agreed Monthly Rate (<span id="studentFeeCurr">EGP</span>)</span>
+              <span class="form-hint" id="studentRateModeHint">Group Standard</span>
+            </label>
+            <input type="number" step="0.01" min="0" class="input" id="studentAgreedFee" required oninput="updateStudentRateHint()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Enrolled Date</label>
+            <input type="date" class="input" id="studentEnrolledDate" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes <span class="form-hint">Optional</span></label>
+            <input type="text" class="input" id="studentNotes" dir="auto" placeholder="e.g., Sibling discount" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalStudent')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: OFFICIAL RECEIPT ================= -->
+<div class="modal-overlay" id="modalReceipt" onclick="closeModalOnBackdrop(event, 'modalReceipt')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Official Payment Slip</div>
+      <button class="modal-close" onclick="closeModal('modalReceipt')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="receiptModalPreview"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-wa" onclick="sendReceiptWhatsApp()">Send via WhatsApp</button>
+      <button type="button" class="btn btn-outline" onclick="copyReceiptText()">Copy Text</button>
+      <button type="button" class="btn btn-primary" onclick="printCurrentReceipt()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print / Save as PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: STUDENT HISTORY ================= -->
+<div class="modal-overlay" id="modalStudentHistory" onclick="closeModalOnBackdrop(event, 'modalStudentHistory')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="historyModalTitle">Student Payment History</div>
+      <button class="modal-close" onclick="closeModal('modalStudentHistory')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="historyModalBody"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeModal('modalStudentHistory')">Close</button>
+      <button type="button" class="btn btn-primary" id="historyLogPaymentBtn">+ Log Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: CONFIRMATION ================= -->
+<div class="modal-overlay" id="modalConfirm" onclick="closeModalOnBackdrop(event, 'modalConfirm')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" id="confirmTitle">Confirm Action</div>
+      <button class="modal-close" onclick="closeModal('modalConfirm')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="font-size:14px; color:var(--text);"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeModal('modalConfirm')">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dedicated Clean Print Target -->
+<div id="print-receipt-root"></div>
+
+<!-- Toast Notifications -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const STORAGE_KEY = 'spt_offline_db_v1';
+  const DEFAULT_TUTOR_NAME = 'Alsayed Ibrahim Alsayed';
+  const DEFAULT_TUTOR_PHONE = '01145450890';
+
+  const CURRENCY_META = {
+    EGP: { symbol: 'EGP', pos: 'suffix' },
+    USD: { symbol: '$',   pos: 'prefix' },
+    SAR: { symbol: 'SAR', pos: 'suffix' },
+    AED: { symbol: 'AED', pos: 'suffix' },
+    EUR: { symbol: '€',   pos: 'prefix' }
+  };
+
+  let db = null;
+  let currentView = 'overview';
+  let activeMonth = getTodayMonth();
+  let selectedOverviewCurrency = 'ALL';
+  let activeReceiptId = null;
+  let pendingConfirmFn = null;
+
+  function getTodayISO() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function getTodayMonth() {
+    return getTodayISO().slice(0, 7);
+  }
+
+  function genId(prefix) {
+    return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatMoney(amount, currency = 'EGP') {
+    const num = Number(amount) || 0;
+    const hasDecimals = Math.abs(num % 1) > 0.001;
+    const formatted = num.toLocaleString('en-US', {
+      minimumFractionDigits: hasDecimals ? 2 : 0,
+      maximumFractionDigits: 2
+    });
+    const meta = CURRENCY_META[currency] || { symbol: currency, pos: 'suffix' };
+    return meta.pos === 'prefix' ? `${meta.symbol}${formatted}` : `${formatted} ${meta.symbol}`;
+  }
+
+  function formatMonthLabel(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return ym || '';
+    const [y, m] = ym.split('-').map(Number);
+    const dt = new Date(y, m - 1, 1);
+    return dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  function formatMonthLong(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return ym || '';
+    const [y, m] = ym.split('-').map(Number);
+    const dt = new Date(y, m - 1, 1);
+    return dt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  function formatDateNice(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-').map(Number);
+    if (!y || !m || !d) return iso;
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatWhatsAppPhone(phone) {
+    if (!phone) return '';
+    let digits = String(phone).replace(/\D/g, '');
+    if (digits.startsWith('00')) digits = digits.slice(2);
+    if (digits.length === 11 && digits.startsWith('01')) {
+      digits = '2' + digits;
+    }
+    return digits;
+  }
+
+  function getInitials(name) {
+    const parts = String(name || 'AI').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'AI';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  function createEmptyDB() {
+    return {
+      version: 1,
+      isDemo: false,
+      receiptSeq: 0,
+      settings: {
+        tutorName: DEFAULT_TUTOR_NAME,
+        academySubtitle: 'Private Tutoring & Academic Coaching',
+        contactInfo: DEFAULT_TUTOR_PHONE,
+        defaultCurrency: 'EGP',
+        receiptNote: 'Thank you for your payment. Please keep this slip for your records.'
+      },
+      groups: [],
+      students: [],
+      payments: []
+    };
+  }
+
+  function createDemoDB() {
+    const m = getTodayMonth();
+    const ymCompact = m.replace('-', '');
+    const d03 = `${m}-03`;
+    const d05 = `${m}-05`;
+    const d08 = `${m}-08`;
+    const d11 = `${m}-11`;
+
+    const g1 = 'grp_phys_egp';
+    const g2 = 'grp_igcse_usd';
+    const g3 = 'grp_math_sar';
+
+    const s1 = 'stu_youssef';
+    const s2 = 'stu_mariam';
+    const s3 = 'stu_omar';
+    const s4 = 'stu_salma';
+    const s5 = 'stu_adam';
+    const s6 = 'stu_noura';
+
+    return {
+      version: 1,
+      isDemo: true,
+      receiptSeq: 4,
+      settings: {
+        tutorName: DEFAULT_TUTOR_NAME,
+        academySubtitle: 'Private Tutoring & Academic Coaching',
+        contactInfo: DEFAULT_TUTOR_PHONE,
+        defaultCurrency: 'EGP',
+        receiptNote: 'Thank you for your timely payment! Wishing continued excellence.'
+      },
+      groups: [
+        {
+          id: g1,
+          name: '3rd Sec — Group A',
+          subject: 'Thanaweya Amma Track',
+          schedule: 'Sun & Wed • 5:00 PM',
+          currency: 'EGP',
+          monthlyFee: 850,
+          notes: 'Main Center',
+          createdAt: d03
+        },
+        {
+          id: g2,
+          name: 'IGCSE Extended Track',
+          subject: 'Cambridge International',
+          schedule: 'Mon & Thu • 7:00 PM',
+          currency: 'USD',
+          monthlyFee: 120,
+          notes: 'Online Live Sessions',
+          createdAt: d03
+        },
+        {
+          id: g3,
+          name: 'المسار المتقدم — أونلاين',
+          subject: 'مجموعة الخليج أونلاين',
+          schedule: 'Tue & Sat • 8:30 PM',
+          currency: 'SAR',
+          monthlyFee: 350,
+          notes: 'Online Cohort',
+          createdAt: d03
+        }
+      ],
+      students: [
+        { id: s1, name: 'Youssef Ahmed', phone: '01015550192', groupId: g1, status: 'active', agreedFee: 850, usesCustomFee: false, enrolledDate: '2026-09-01', notes: '' },
+        { id: s2, name: 'مريم طارق محمود', phone: '01124408821', groupId: g1, status: 'active', agreedFee: 700, usesCustomFee: true, enrolledDate: '2026-09-01', notes: 'Sibling discount applied' },
+        { id: s3, name: 'Omar Sherif', phone: '01098765432', groupId: g1, status: 'active', agreedFee: 850, usesCustomFee: false, enrolledDate: '2026-09-10', notes: '' },
+        { id: s4, name: 'Salma El-Sayed', phone: '01223109944', groupId: g2, status: 'active', agreedFee: 120, usesCustomFee: false, enrolledDate: '2026-09-05', notes: '' },
+        { id: s5, name: 'Adam Khaled', phone: '01067891122', groupId: g2, status: 'paused', agreedFee: 120, usesCustomFee: false, enrolledDate: '2026-09-05', notes: 'Paused for midterms' },
+        { id: s6, name: 'نورة العتيبي', phone: '+966553217740', groupId: g3, status: 'active', agreedFee: 350, usesCustomFee: false, enrolledDate: '2026-10-01', notes: '' }
+      ],
+      payments: [
+        {
+          id: 'pay_demo_1',
+          receiptNo: `REC-${ymCompact}-0001`,
+          studentId: s1,
+          groupId: g1,
+          studentNameSnapshot: 'Youssef Ahmed',
+          groupNameSnapshot: '3rd Sec — Group A',
+          subjectSnapshot: 'Thanaweya Amma Track',
+          agreedFeeSnapshot: 850,
+          billingMonth: m,
+          amount: 850,
+          currency: 'EGP',
+          gateway: 'InstaPay',
+          reference: 'IP-7748291',
+          paymentDate: d03,
+          notes: 'Paid in full',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'pay_demo_2',
+          receiptNo: `REC-${ymCompact}-0002`,
+          studentId: s2,
+          groupId: g1,
+          studentNameSnapshot: 'مريم طارق محمود',
+          groupNameSnapshot: '3rd Sec — Group A',
+          subjectSnapshot: 'Thanaweya Amma Track',
+          agreedFeeSnapshot: 700,
+          billingMonth: m,
+          amount: 400,
+          currency: 'EGP',
+          gateway: 'Vodafone Cash',
+          reference: 'VF-552104',
+          paymentDate: d05,
+          notes: 'First installment',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'pay_demo_3',
+          receiptNo: `REC-${ymCompact}-0003`,
+          studentId: s4,
+          groupId: g2,
+          studentNameSnapshot: 'Salma El-Sayed',
+          groupNameSnapshot: 'IGCSE Extended Track',
+          subjectSnapshot: 'Cambridge International',
+          agreedFeeSnapshot: 120,
+          billingMonth: m,
+          amount: 120,
+          currency: 'USD',
+          gateway: 'Bank Transfer',
+          reference: 'BT-89201',
+          paymentDate: d08,
+          notes: '',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'pay_demo_4',
+          receiptNo: `REC-${ymCompact}-0004`,
+          studentId: s6,
+          groupId: g3,
+          studentNameSnapshot: 'نورة العتيبي',
+          groupNameSnapshot: 'المسار المتقدم — أونلاين',
+          subjectSnapshot: 'مجموعة الخليج أونلاين',
+          agreedFeeSnapshot: 350,
+          billingMonth: m,
+          amount: 350,
+          currency: 'SAR',
+          gateway: 'Bank Transfer',
+          reference: 'SA-302914',
+          paymentDate: d11,
+          notes: 'Monthly tuition',
+          createdAt: new Date().toISOString()
+        }
+      ]
+    };
+  }
+
+  function loadDB() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        db = createDemoDB();
+        saveDB();
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.groups) || !Array.isArray(parsed.students) || !Array.isArray(parsed.payments)) {
+        throw new Error('Corrupt DB');
+      }
+      db = Object.assign(createEmptyDB(), parsed);
+      db.settings = Object.assign(createEmptyDB().settings, parsed.settings || {});
+
+      // Migrate old placeholder tutor name/phone automatically
+      if (!db.settings.tutorName || db.settings.tutorName === 'Mr. Karim Mansour' || db.settings.tutorName === 'My Tutoring Studio') {
+        db.settings.tutorName = DEFAULT_TUTOR_NAME;
+      }
+      if (!db.settings.contactInfo || db.settings.contactInfo === '+20 100 245 8890' || db.settings.contactInfo === '+20 100 123 4567') {
+        db.settings.contactInfo = DEFAULT_TUTOR_PHONE;
+      }
+      saveDB();
+    } catch (e) {
+      db = createDemoDB();
+      saveDB();
+    }
+  }
+
+  function saveDB() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    } catch (e) {
+      showToast('Warning: Browser storage quota exceeded.');
+    }
+  }
+
+  function getGroup(groupId) {
+    return db.groups.find(g => g.id === groupId) || null;
+  }
+
+  function getStudent(studentId) {
+    return db.students.find(s => s.id === studentId) || null;
+  }
+
+  function getEffectiveFee(student) {
+    const group = getGroup(student.groupId);
+    if (student.usesCustomFee) return Number(student.agreedFee) || 0;
+    return group ? (Number(group.monthlyFee) || 0) : (Number(student.agreedFee) || 0);
+  }
+
+  function getStudentCurrency(student) {
+    const group = getGroup(student.groupId);
+    return group ? group.currency : (db.settings.defaultCurrency || 'EGP');
+  }
+
+  function getStudentMonthLedger(student, billingMonth) {
+    const fee = getEffectiveFee(student);
+    const currency = getStudentCurrency(student);
+    const monthPayments = db.payments.filter(p => p.studentId === student.id && p.billingMonth === billingMonth);
+    const paid = monthPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const remaining = Math.max(0, fee - paid);
+    const overpaid = Math.max(0, paid - fee);
+    let status = 'unpaid';
+    if (fee <= 0 || paid >= fee) status = 'paid';
+    else if (paid > 0) status = 'partial';
+
+    return { fee, currency, paid, remaining, overpaid, status, payments: monthPayments };
+  }
+
+  function nextReceiptNumber(billingMonth) {
+    db.receiptSeq = (Number(db.receiptSeq) || 0) + 1;
+    const ym = (billingMonth || getTodayMonth()).replace('-', '');
+    return `REC-${ym}-${String(db.receiptSeq).padStart(4, '0')}`;
+  }
+
+  const VIEW_META = {
+    overview: { title: 'Overview & Monthly Dues', subtitle: 'Track monthly collections and pending student balances' },
+    groups:   { title: 'Group Management', subtitle: 'Organize subject tracks, schedules, currencies, and standard fees' },
+    students: { title: 'Student Roster', subtitle: 'Manage enrolled students, contact info, and agreed monthly rates' },
+    payments: { title: 'Payments & Receipts', subtitle: 'Review transactions across gateways and print official payment slips' },
+    settings: { title: 'Backup & Settings', subtitle: 'Customize receipts, export Excel CSVs, and manage offline JSON backups' }
+  };
+
+  function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`view-${view}`).classList.add('active');
+
+    document.querySelectorAll('.nav-btn, .bnav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+
+    const meta = VIEW_META[view];
+    document.getElementById('topbarTitle').textContent = meta.title;
+    document.getElementById('topbarSubtitle').textContent = meta.subtitle;
+    toggleSidebar(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderAll();
+  }
+
+  function handleMenuButton() {
+    if (window.innerWidth <= 920) {
+      const isOpen = document.getElementById('sidebar').classList.contains('open');
+      toggleSidebar(!isOpen);
+    } else {
+      document.body.classList.toggle('sidebar-collapsed');
+    }
+  }
+
+  function toggleSidebar(open) {
+    document.getElementById('sidebar').classList.toggle('open', open);
+    document.getElementById('sidebarBackdrop').classList.toggle('open', open);
+  }
+
+  function setBillingMonth(ym) {
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return;
+    activeMonth = ym;
+    updateMonthUI();
+    renderAll();
+  }
+
+  function stepMonth(delta) {
+    const [y, m] = activeMonth.split('-').map(Number);
+    const dt = new Date(y, m - 1 + delta, 1);
+    const nextYm = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+    setBillingMonth(nextYm);
+  }
+
+  function updateMonthUI() {
+    document.getElementById('monthDisplay').textContent = formatMonthLabel(activeMonth);
+    document.getElementById('globalMonthInput').value = activeMonth;
+    const expLabel = document.getElementById('exportMonthLabel');
+    if (expLabel) expLabel.textContent = formatMonthLong(activeMonth);
+  }
+
+  function renderAll() {
+    const tName = db.settings.tutorName || DEFAULT_TUTOR_NAME;
+    const tPhone = db.settings.contactInfo || DEFAULT_TUTOR_PHONE;
+    const tSub = db.settings.academySubtitle || 'Private Tutoring & Academic Coaching';
+
+    document.getElementById('sidebarTutorName').textContent = tName;
+    document.getElementById('sidebarTutorPhone').textContent = tPhone;
+    document.getElementById('bannerTutorName').textContent = tName;
+    document.getElementById('bannerTutorSub').textContent = tSub;
+    document.getElementById('bannerTutorPhone').textContent = tPhone;
+    document.getElementById('bannerAvatar').textContent = getInitials(tName);
+
+    const demoActions = document.getElementById('demoBannerActions');
+    if (db.isDemo) {
+      demoActions.innerHTML = `
+        <button class="btn btn-melon btn-sm" onclick="dismissDemoBanner()">Keep Sample</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.14); color:#fff;" onclick="confirmClearAllData()">Start Fresh</button>
+      `;
+    } else {
+      demoActions.innerHTML = `
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.12); color:var(--melon);" onclick="switchView('settings')">Edit Profile</button>
+      `;
+    }
+
+    const activeStudents = db.students.filter(s => s.status === 'active');
+    const unpaidOrPartial = activeStudents.filter(s => getStudentMonthLedger(s, activeMonth).status !== 'paid').length;
+
+    document.getElementById('navUnpaidCount').textContent = unpaidOrPartial;
+    document.getElementById('navGroupsCount').textContent = db.groups.length;
+    document.getElementById('navStudentsCount').textContent = db.students.length;
+    document.getElementById('navPaymentsCount').textContent = db.payments.length;
+
+    populateGroupFilterSelects();
+    updateMonthUI();
+
+    if (currentView === 'overview') renderOverview();
+    if (currentView === 'groups') renderGroups();
+    if (currentView === 'students') renderStudents();
+    if (currentView === 'payments') renderPayments();
+    if (currentView === 'settings') renderSettings();
+  }
+
+  function dismissDemoBanner() {
+    db.isDemo = false;
+    saveDB();
+    renderAll();
+  }
+
+  function populateGroupFilterSelects() {
+    const ids = ['duesGroupFilter', 'studentsGroupFilter', 'paymentsGroupFilter'];
+    ids.forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = `<option value="">All Groups</option>` + db.groups
+        .map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.name)} (${escapeHtml(g.currency)})</option>`)
+        .join('');
+      if (db.groups.some(g => g.id === prev)) sel.value = prev;
+    });
+  }
+
+  /* =========================================================================
+     VIEW 1: OVERVIEW & MONTHLY DUES
+     ========================================================================= */
+  function renderOverview() {
+    const activeStudents = db.students.filter(s => s.status === 'active');
+    const currenciesUsed = [...new Set([
+      ...db.groups.map(g => g.currency),
+      ...db.payments.filter(p => p.billingMonth === activeMonth).map(p => p.currency)
+    ])];
+
+    if (selectedOverviewCurrency !== 'ALL' && !currenciesUsed.includes(selectedOverviewCurrency)) {
+      selectedOverviewCurrency = 'ALL';
+    }
+
+    const currBar = document.getElementById('overviewCurrencyBar');
+    if (currenciesUsed.length > 1) {
+      currBar.style.display = 'flex';
+      currBar.innerHTML = `<span style="font-size:12px; font-weight:700; color:var(--text-muted); margin-right:4px;">Currency View:</span>` +
+        `<button class="currency-pill ${selectedOverviewCurrency === 'ALL' ? 'active' : ''}" onclick="setOverviewCurrency('ALL')">All (${currenciesUsed.length})</button>` +
+        currenciesUsed.map(c =>
+          `<button class="currency-pill ${selectedOverviewCurrency === c ? 'active' : ''}" onclick="setOverviewCurrency('${c}')">${c}</button>`
+        ).join('');
+    } else {
+      currBar.style.display = 'none';
+      currBar.innerHTML = '';
+    }
+
+    const totalsByCurr = {};
+    const ensureCurr = (c) => {
+      if (!totalsByCurr[c]) totalsByCurr[c] = { expected: 0, collected: 0, remaining: 0, students: 0, paidCount: 0 };
+      return totalsByCurr[c];
+    };
+
+    activeStudents.forEach(st => {
+      const l = getStudentMonthLedger(st, activeMonth);
+      if (selectedOverviewCurrency !== 'ALL' && l.currency !== selectedOverviewCurrency) return;
+      const bucket = ensureCurr(l.currency);
+      bucket.expected += l.fee;
+      bucket.collected += l.paid;
+      bucket.remaining += l.remaining;
+      bucket.students += 1;
+      if (l.status === 'paid') bucket.paidCount += 1;
+    });
+
+    db.payments
+      .filter(p => p.billingMonth === activeMonth)
+      .forEach(p => {
+        const st = getStudent(p.studentId);
+        if (st && st.status === 'active') return;
+        if (selectedOverviewCurrency !== 'ALL' && p.currency !== selectedOverviewCurrency) return;
+        const bucket = ensureCurr(p.currency);
+        bucket.collected += Number(p.amount) || 0;
+      });
+
+    const currKeys = Object.keys(totalsByCurr);
+    const defaultCurr = selectedOverviewCurrency === 'ALL' ? (db.settings.defaultCurrency || 'EGP') : selectedOverviewCurrency;
+    const isMulti = currKeys.length > 1;
+
+    const renderMoneyLines = (field) => {
+      if (!currKeys.length) return `<div class="kpi-val">${formatMoney(0, defaultCurr)}</div>`;
+      return currKeys.map(c =>
+        `<div class="kpi-val ${isMulti ? 'multi' : ''}">${formatMoney(totalsByCurr[c][field], c)}</div>`
+      ).join('');
+    };
+
+    const totalStudentsFiltered = currKeys.reduce((s, c) => s + totalsByCurr[c].students, 0);
+    const totalPaidStudents = currKeys.reduce((s, c) => s + totalsByCurr[c].paidCount, 0);
+    const completionPct = totalStudentsFiltered > 0 ? Math.round((totalPaidStudents / totalStudentsFiltered) * 100) : 0;
+
+    let collectionRateText = `${totalPaidStudents} of ${totalStudentsFiltered} active students settled`;
+    if (currKeys.length === 1) {
+      const b = totalsByCurr[currKeys[0]];
+      const pctAmt = b.expected > 0 ? Math.min(100, Math.round((b.collected / b.expected) * 100)) : 0;
+      collectionRateText = `${pctAmt}% of expected tuition collected`;
+    }
+
+    document.getElementById('overviewKpiGrid').innerHTML = `
+      <div class="kpi-card kpi-featured">
+        <div class="kpi-head">
+          <span class="kpi-label">Collected (${formatMonthLabel(activeMonth)})</span>
+          <div class="kpi-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div class="kpi-values">${renderMoneyLines('collected')}</div>
+        <div class="kpi-sub">${collectionRateText}</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-head">
+          <span class="kpi-label">Outstanding Balance</span>
+          <div class="kpi-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y
